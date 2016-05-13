@@ -51,9 +51,11 @@ const gameStateSource = intialGameStateSource
   .scan(applyActionToState)
   .publish().refCount();
 
-const hitSource = gameStateSource.filter(state => {
-  return state.currentBlock.coordinates.some(c => c.y >= config.rows-1);
-});
+const hitSource = gameStateSource.filter(isHit);
+
+function isHit(state) {
+  return state.currentBlock.coordinates.some(c => c.y + 1 >= config.rows || state.canvas[c.y + 1][c.x] === 1);
+}
 
 hitSource.do(x => console.log("prezip")).zip(blockSource, (state, block) => ({ 
   command: "next", 
@@ -70,10 +72,14 @@ function applyActionToState(state, action) {
         coordinates = state.currentBlock.coordinates.map(c => ({ x: c.x, y: c.y + 1 }))
         break;
     case 'left':
-        coordinates = state.currentBlock.coordinates.map(c => ({ x: c.x - 1, y: c.y }))
+        coordinates = !state.currentBlock.coordinates.some(c => c.x - 1 < 0)
+          ? state.currentBlock.coordinates.map(c => ({ x: c.x - 1, y: c.y }))
+          : state.currentBlock.coordinates;
         break;
     case 'right':
-        coordinates = state.currentBlock.coordinates.map(c => ({ x: c.x + 1, y: c.y }))
+        coordinates = !state.currentBlock.coordinates.some(c => c.x + 1 >= config.cols)
+          ? state.currentBlock.coordinates.map(c => ({ x: c.x + 1, y: c.y }))
+          : state.currentBlock.coordinates;
         break;
     case 'next':
         state.currentBlock.coordinates.forEach(c => state.canvas[c.y][c.x] = 1);
