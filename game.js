@@ -11,19 +11,25 @@ const config = {
   cols: 7
 };
 
-const initialState = {
-  canvas: [],
-  currentBlock: {
-    coordinates: [
-      { x: 0, y: 0 },
-      { x: 0, y: 1 },
-      { x: 1, y: 0 },
-      { x: 1, y: 1 },
-    ]
-  }
-};
+const initialState = initialStateFactory(config.rows, config.cols);
 
-for(let i = 0; i < config.rows; i++) { initialState.canvas.push([ 0, 0, 0, 0, 0, 0, 0 ]) }
+function initialStateFactory(rows, cols) {
+  const emptyCol = [];
+  const canvas = [];
+  for(let i = 0; i < cols; i++) { emptyCol.push(0) }
+  for(let i = 0; i < config.rows; i++) { canvas.push([...emptyCol ]) }
+  return { 
+    canvas, 
+    currentBlock: {
+      coordinates: [
+        { x: 0, y: 0 },
+        { x: 0, y: 1 },
+        { x: 1, y: 0 },
+        { x: 1, y: 1 },
+      ]
+    }
+  };
+}
 
 // Blocks
 const blockSource = Rx.Observable.range(1, 1000).map(() => Math.floor(Math.random(2342323432) * 7));
