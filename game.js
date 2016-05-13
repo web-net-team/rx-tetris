@@ -51,7 +51,7 @@ function isHit(state) {
   return state.currentBlock.coordinates.some(c => c.y + 1 >= config.rows || state.canvas[c.y + 1][c.x] === 1);
 }
 
-hitSource.do(x => console.log("prezip")).zip(blockSource, (state, block) => ({ 
+hitSource.zip(blockSource, (state, block) => ({ 
   command: "next", 
   block: block 
 })).subscribe(actionSource); 
@@ -66,12 +66,12 @@ function applyActionToState(state, action) {
         coordinates = state.currentBlock.coordinates.map(c => ({ x: c.x, y: c.y + 1 }))
         break;
     case 'left':
-        coordinates = !state.currentBlock.coordinates.some(c => c.x - 1 < 0)
+        coordinates = !state.currentBlock.coordinates.some(c => c.x - 1 < 0 || state.canvas[c.y][c.x - 1] === 1)
           ? state.currentBlock.coordinates.map(c => ({ x: c.x - 1, y: c.y }))
           : state.currentBlock.coordinates;
         break;
     case 'right':
-        coordinates = !state.currentBlock.coordinates.some(c => c.x + 1 >= config.cols)
+        coordinates = !state.currentBlock.coordinates.some(c => c.x + 1 >= config.cols || state.canvas[c.y][c.x + 1] === 1)
           ? state.currentBlock.coordinates.map(c => ({ x: c.x + 1, y: c.y }))
           : state.currentBlock.coordinates;
         break;
