@@ -44,9 +44,11 @@ const gameStateSource = intialGameStateSource
   .scan(applyActionToState)
   .publish().refCount();
 
-const hitSource = gameStateSource.filter(state => {
-  return state.currentBlock.coordinates.some(c => c.y >= config.rows-1);
-});
+const hitSource = gameStateSource.filter(isHit);
+
+function isHit(state) {
+  return state.currentBlock.coordinates.some(c => c.y + 1 >= config.rows || state.canvas[c.y + 1][c.x] === 1);
+}
 
 hitSource.do(x => console.log("prezip")).zip(blockSource, (state, block) => ({ 
   command: "next", 
