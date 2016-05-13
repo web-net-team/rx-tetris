@@ -6,7 +6,8 @@ const controls = {
 };
 
 const config = {
-  rows: 10
+  rows: 10,
+  cols: 7
 };
 
 const initialState = {
@@ -65,10 +66,14 @@ function applyActionToState(state, action) {
         coordinates = state.currentBlock.coordinates.map(c => ({ x: c.x, y: c.y + 1 }))
         break;
     case 'left':
-        coordinates = state.currentBlock.coordinates.map(c => ({ x: c.x - 1, y: c.y }))
+        coordinates = !state.currentBlock.coordinates.some(c => c.x - 1 < 0)
+          ? state.currentBlock.coordinates.map(c => ({ x: c.x - 1, y: c.y }))
+          : state.currentBlock.coordinates;
         break;
     case 'right':
-        coordinates = state.currentBlock.coordinates.map(c => ({ x: c.x + 1, y: c.y }))
+        coordinates = !state.currentBlock.coordinates.some(c => c.x + 1 >= config.cols)
+          ? state.currentBlock.coordinates.map(c => ({ x: c.x + 1, y: c.y }))
+          : state.currentBlock.coordinates;
         break;
     case 'next':
         state.currentBlock.coordinates.forEach(c => state.canvas[c.y][c.x] = 1);
