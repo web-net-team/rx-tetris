@@ -1,0 +1,22 @@
+{
+  "name": "rx-tetris",
+  "version": "1.0.0",
+  "description": "Tetris with RxJs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/web-net-team/rx-tetris.git"
+  },
+  "author": "WebNetTeam",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/web-net-team/rx-tetris/issues"
+  },
+  "homepage": "https://github.com/web-net-team/rx-tetris#readme",
+  "dependencies": {
+    "@reactivex/rxjs": "^5.0.0-beta.7"
+  }
+}
