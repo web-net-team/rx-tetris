@@ -37,16 +37,18 @@ const commandSource = downSource.merge(controlsSource);
 const actionSource = new Rx.Subject();
 commandSource.subscribe(actionSource);
 
-
 // State
 const intialGameStateSource = Rx.Observable.of(initialState);
-const gameStateSource = intialGameStateSource.merge(actionSource).scan(applyActionToState);
+const gameStateSource = intialGameStateSource
+  .merge(actionSource)
+  .scan(applyActionToState)
+  .publish().refCount();
 
 const hitSource = gameStateSource.filter(state => {
   return state.currentBlock.coordinates.some(c => c.y >= config.rows-1);
 });
 
-hitSource.zip(blockSource, (state, block) => ({ 
+hitSource.do(x => console.log("prezip")).zip(blockSource, (state, block) => ({ 
   command: "next", 
   block: block 
 })).subscribe(actionSource); 
