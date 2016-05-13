@@ -2,7 +2,8 @@ console.clear();
 //
 const controls = {
   ArrowRight: { command: 'right' },
-  ArrowLeft: { command: 'left' }
+  ArrowLeft: { command: 'left' },
+  ArrowDown: { command: 'down' }
 };
 
 const config = {
@@ -47,10 +48,6 @@ const gameStateSource = intialGameStateSource
 
 const hitSource = gameStateSource.filter(isHit);
 
-function isHit(state) {
-  return state.currentBlock.coordinates.some(c => c.y + 1 >= config.rows || state.canvas[c.y + 1][c.x] === 1);
-}
-
 hitSource.zip(blockSource, (state, block) => ({ 
   command: "next", 
   block: block 
@@ -89,6 +86,10 @@ function applyActionToState(state, action) {
       coordinates: coordinates
     }
   };
+}
+
+function isHit(state) {
+  return state.currentBlock.coordinates.some(c => c.y + 1 >= config.rows || state.canvas[c.y + 1][c.x] === 1);
 }
 
 function renderState(state) {
