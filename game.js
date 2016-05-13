@@ -46,17 +46,12 @@ const hitSource = gameStateSource.filter(state => {
   return state.currentBlock.coordinates.some(c => c.y >= config.rows-1);
 });
 
-const nextBlock = hitSource.zip(blockSource, (state, block) => ({ 
+hitSource.zip(blockSource, (state, block) => ({ 
   command: "next", 
   block: block 
 })).subscribe(actionSource); 
 
-gameStateSource
-  .withLatestFrom(blockSource)
-  .map(result => {
-  return result[0];
-}).subscribe(domRenderer);
-
+gameStateSource.subscribe(domRenderer);
 
 function applyActionToState(state, action) {
   let coordinates = [];
