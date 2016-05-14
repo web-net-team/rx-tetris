@@ -7,8 +7,8 @@ const controls = {
 };
 
 const config = {
-  rows: 10,
-  cols: 7
+  rows: 7,
+  cols: 8
 };
 
 const initialState = initialStateFactory(config.rows, config.cols);
@@ -16,16 +16,16 @@ const initialState = initialStateFactory(config.rows, config.cols);
 function initialStateFactory(rows, cols) {
   const emptyCol = [];
   const canvas = [];
-  for(let i = 0; i < cols; i++) { emptyCol.push(0) }
+  for(let i = 0; i < config.cols; i++) { emptyCol.push(0) }
   for(let i = 0; i < config.rows; i++) { canvas.push([...emptyCol ]) }
   return { 
     canvas, 
     currentBlock: {
       coordinates: [
-        { x: 0, y: 0 },
-        { x: 0, y: 1 },
-        { x: 1, y: 0 },
-        { x: 1, y: 1 },
+        { x: 3, y: 0 },
+        { x: 3, y: 1 },
+        { x: 4, y: 0 },
+        { x: 4, y: 1 },
       ]
     }
   };
@@ -57,7 +57,11 @@ const hitSource = gameStateSource.filter(isHit);
 hitSource.zip(blockSource, (state, block) => ({ 
   command: "next", 
   block: block 
-})).subscribe(actionSource); 
+})).subscribe(actionSource);
+
+const completedRowsSource = gameStateSource.filter(hasCompletedRow)
+  .map(getCompletedRows)
+  .subscribe(() => console.log("row completed"));
 
 gameStateSource.subscribe(domRenderer);
 
@@ -98,6 +102,17 @@ function isHit(state) {
   return state.currentBlock.coordinates.some(c => c.y + 1 >= config.rows || state.canvas[c.y + 1][c.x] === 1);
 }
 
+function hasCompletedRow(state) {
+  return state.canvas.some(row => row.every(c => c))
+}
+
+function getCompletedRows(state) {
+  return state.canvas
+    .map((row, index) => { return { row, index } })
+    .filter(rowAndIndex => rowAndIndex.row.every(c => c))
+    .map(rowAndIndex => rowAndIndex.index);
+}
+
 function renderState(state) {
   console.clear();
   state.canvas.forEach((row, rowIndex) => {
@@ -108,7 +123,7 @@ function renderState(state) {
 }
 
 function domRenderer(state) {
-  const squareSize = 20;
+  const squareSize = 15;
   const canvas = document.querySelector('canvas');
   const context = canvas.getContext("2d");
   context.clearRect(0, 0, canvas.width, canvas.height);
