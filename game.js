@@ -13,11 +13,19 @@ const config = {
 
 const initialState = initialStateFactory(config.rows, config.cols);
 
+renderState(initialState);
+
+function createEmptyRow(cols) {
+  const emptyRow = [];
+  for(let i = 0; i < cols; i++) { emptyRow.push(0) }
+  
+  return emptyRow;
+}
+
 function initialStateFactory(rows, cols) {
-  const emptyCol = [];
+  const emptyRow = createEmptyRow(cols);
   const canvas = [];
-  for(let i = 0; i < config.cols; i++) { emptyCol.push(0) }
-  for(let i = 0; i < config.rows; i++) { canvas.push([...emptyCol ]) }
+  for(let i = 0; i < rows; i++) { canvas.push([...emptyRow ]) }
   return { 
     canvas, 
     currentBlock: {
@@ -32,6 +40,7 @@ function initialStateFactory(rows, cols) {
 }
 
 // Blocks
+// todo: make infinite
 const blockSource = Rx.Observable.range(1, 1000).map(() => Math.floor(Math.random(2342323432) * 7));
 
 // Tick
@@ -39,7 +48,9 @@ const tickSource = Rx.Observable.interval(1000);
 
 // Commmands
 const downSource = tickSource.map(ev => ({ command: 'down' }));
-const controlsSource = Rx.Observable.fromEvent(document, 'keydown').map(k => controls[k.code]).filter(e => e);
+const controlsSource = Rx.Observable.fromEvent(document, 'keydown')
+  .map(k => controls[k.code])
+  .filter(e => e);
 const commandSource = downSource.merge(controlsSource);
 
 const actionSource = new Rx.Subject();
@@ -55,47 +66,65 @@ const gameStateSource = intialGameStateSource
 const hitSource = gameStateSource.filter(isHit);
 
 hitSource.zip(blockSource, (state, block) => ({ 
-  command: "next", 
+  command: 'next', 
   block: block 
 })).subscribe(actionSource);
 
-const completedRowsSource = gameStateSource.filter(hasCompletedRow)
+// todo: filter after
+gameStateSource.filter(hasCompletedRow)
   .map(getCompletedRows)
-  .subscribe(() => console.log("row completed"));
+  .map(rows => ({ command: 'completed', 
+                  rows }))
+  .subscribe(actionSource);
 
 gameStateSource.subscribe(domRenderer);
 
 function applyActionToState(state, action) {
-  let coordinates = [];
+  let coordinates = [...state.currentBlock.coordinates];
+  let canvas = [...state.canvas]
   
   switch(action.command) {
     case 'down':
-        coordinates = state.currentBlock.coordinates.map(c => ({ x: c.x, y: c.y + 1 }))
+        coordinates = coordinates.map(c => ({ x: c.x, y: c.y + 1 }))
         break;
     case 'left':
-        coordinates = !state.currentBlock.coordinates.some(c => c.x - 1 < 0 || state.canvas[c.y][c.x - 1] === 1)
-          ? state.currentBlock.coordinates.map(c => ({ x: c.x - 1, y: c.y }))
-          : state.currentBlock.coordinates;
+        if (!coordinates.some(c => c.x - 1 < 0 || canvas[c.y][c.x - 1] === 1)) {
+          coordinates = coordinates.map(c => ({ x: c.x - 1, y: c.y }))
+        }
         break;
     case 'right':
-        coordinates = !state.currentBlock.coordinates.some(c => c.x + 1 >= config.cols || state.canvas[c.y][c.x + 1] === 1)
-          ? state.currentBlock.coordinates.map(c => ({ x: c.x + 1, y: c.y }))
-          : state.currentBlock.coordinates;
+        if (!coordinates.some(c => c.x + 1 >= config.cols || canvas[c.y][c.x + 1] === 1)) {
+          coordinates = coordinates.map(c => ({ x: c.x + 1, y: c.y }))
+        }
         break;
     case 'next':
-        state.currentBlock.coordinates.forEach(c => state.canvas[c.y][c.x] = 1);
+        coordinates.forEach(c => canvas[c.y][c.x] = 1);
         coordinates = [...initialState.currentBlock.coordinates];
+        break;
+    case 'completed':
+        // debugger;
+        console.log("completed" + action.rows);
+        action.rows.forEach(rowIndex => {
+          canvas.splice(rowIndex, 1)
+          canvas.unshift(createEmptyRow(config.cols))
+        });
+        
+        // debugger;
         break;
     default:
         break;
   }
   
-  return {
-    canvas: state.canvas,
+  let temp = {
+    canvas: canvas,
     currentBlock: {
       coordinates: coordinates
     }
   };
+  
+  renderState(temp);
+  
+  return temp;
 }
 
 function isHit(state) {
@@ -108,7 +137,7 @@ function hasCompletedRow(state) {
 
 function getCompletedRows(state) {
   return state.canvas
-    .map((row, index) => { return { row, index } })
+    .map((row, index) => ({ row, index }))
     .filter(rowAndIndex => rowAndIndex.row.every(c => c))
     .map(rowAndIndex => rowAndIndex.index);
 }
