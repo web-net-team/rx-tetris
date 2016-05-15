@@ -7,9 +7,39 @@ const controls = {
 };
 
 const config = {
-  rows: 7,
+  rows: 12,
   cols: 8
 };
+
+const blocks = [ { coordinates: [ { x: 3, y: 0 },
+                                  { x: 4, y: 0 },
+                                  { x: 3, y: 1 },
+                                  { x: 4, y: 1 } ] },
+                 { coordinates: [ { x: 2, y: 0 },
+                                  { x: 3, y: 0 },
+                                  { x: 4, y: 0 },
+                                  { x: 5, y: 0 } ] },
+                 { coordinates: [ { x: 3, y: 0 },
+                                  { x: 4, y: 0 },
+                                  { x: 4, y: 1 },
+                                  { x: 5, y: 1 } ] },
+                 { coordinates: [ { x: 4, y: 0 },
+                                  { x: 5, y: 0 },
+                                  { x: 3, y: 1 },
+                                  { x: 4, y: 1 } ] },
+                 { coordinates: [ { x: 3, y: 0 },
+                                  { x: 4, y: 0 },
+                                  { x: 5, y: 0 },
+                                  { x: 4, y: 1 } ] },
+                 { coordinates: [ { x: 3, y: 0 },
+                                  { x: 4, y: 0 },
+                                  { x: 5, y: 0 },
+                                  { x: 3, y: 1 } ] },
+                 { coordinates: [ { x: 3, y: 0 },
+                                  { x: 4, y: 0 },
+                                  { x: 5, y: 0 },
+                                  { x: 5, y: 1 } ] },
+];
 
 const initialState = initialStateFactory(config.rows, config.cols);
 
@@ -70,7 +100,7 @@ hitSource.zip(blockSource, (state, block) => ({
   block: block 
 })).subscribe(actionSource);
 
-// todo: filter after
+// todo: filter after getCompletedRows not before
 gameStateSource.filter(hasCompletedRow)
   .map(getCompletedRows)
   .map(rows => ({ command: 'completed', 
@@ -99,17 +129,13 @@ function applyActionToState(state, action) {
         break;
     case 'next':
         coordinates.forEach(c => canvas[c.y][c.x] = 1);
-        coordinates = [...initialState.currentBlock.coordinates];
+        coordinates = [...blocks[action.block].coordinates];
         break;
     case 'completed':
-        // debugger;
-        console.log("completed" + action.rows);
         action.rows.forEach(rowIndex => {
           canvas.splice(rowIndex, 1)
           canvas.unshift(createEmptyRow(config.cols))
         });
-        
-        // debugger;
         break;
     default:
         break;
