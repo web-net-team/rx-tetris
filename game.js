@@ -175,17 +175,20 @@ function renderState(state) {
 }
 
 function domRenderer(state) {
-  const squareSize = 15;
+  const squareSize = 30;
   const canvas = document.querySelector('canvas');
   const context = canvas.getContext("2d");
+  
   context.clearRect(0, 0, canvas.width, canvas.height);
+  
   state.canvas.forEach((row, rowIndex) => {
     row.forEach((col, colIndex) => {
       const isFilled = state.currentBlock.coordinates.some(c => c.x === colIndex && c.y === rowIndex) ? 1 : col;
+      
       if (isFilled) {
-        context.fillRect(colIndex * squareSize, rowIndex * squareSize,squareSize,squareSize);  
+        context.fillRect(colIndex * squareSize, rowIndex * squareSize, squareSize, squareSize);  
       } else {
-        context.rect(colIndex * squareSize, rowIndex * squareSize,squareSize,squareSize);
+        context.rect(colIndex * squareSize, rowIndex * squareSize, squareSize, squareSize);
         context.stroke();
       }
     });
