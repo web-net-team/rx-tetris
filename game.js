@@ -72,7 +72,7 @@ const blockSource = Rx.Observable
  }
 
 // Tick
-const tickSource = Rx.Observable.interval(1000);
+const tickSource = Rx.Observable.interval(500);
 
 // Commmands
 const downSource = tickSource.map(ev => ({ command: 'down' }));
@@ -175,7 +175,7 @@ function renderState(state) {
 }
 
 function domRenderer(state) {
-  const squareSize = 30;
+  const squareSize = 50;
   const canvas = document.querySelector('canvas');
   const context = canvas.getContext("2d");
   
