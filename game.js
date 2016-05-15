@@ -1,5 +1,5 @@
 console.clear();
-//
+
 const controls = {
   ArrowRight: { command: 'right' },
   ArrowLeft: { command: 'left' },
@@ -43,8 +43,6 @@ const blocks = [ { coordinates: [ { x: 3, y: 0 },
 
 const initialState = initialStateFactory(config.rows, config.cols);
 
-renderState(initialState);
-
 function createEmptyRow(cols) {
   const emptyRow = [];
   for(let i = 0; i < cols; i++) { emptyRow.push(0) }
@@ -56,29 +54,30 @@ function initialStateFactory(rows, cols) {
   const emptyRow = createEmptyRow(cols);
   const canvas = [];
   for(let i = 0; i < rows; i++) { canvas.push([...emptyRow ]) }
+  
   return { 
     canvas, 
-    currentBlock: {
-      coordinates: [
-        { x: 3, y: 0 },
-        { x: 3, y: 1 },
-        { x: 4, y: 0 },
-        { x: 4, y: 1 },
-      ]
-    }
+    currentBlock: blocks[getRandomBlock()]
   };
 }
 
 // Blocks
 // todo: make infinite
-const blockSource = Rx.Observable.range(1, 1000).map(() => Math.floor(Math.random(2342323432) * 7));
+const blockSource = Rx.Observable
+  .range(1, 1000)
+  .map(getRandomBlock);
+  
+ function getRandomBlock() {
+   return Math.floor(Math.random() * 7);
+ }
 
 // Tick
 const tickSource = Rx.Observable.interval(1000);
 
 // Commmands
 const downSource = tickSource.map(ev => ({ command: 'down' }));
-const controlsSource = Rx.Observable.fromEvent(document, 'keydown')
+const controlsSource = Rx.Observable
+  .fromEvent(document, 'keydown')
   .map(k => controls[k.code])
   .filter(e => e);
 const commandSource = downSource.merge(controlsSource);
@@ -91,17 +90,19 @@ const intialGameStateSource = Rx.Observable.of(initialState);
 const gameStateSource = intialGameStateSource
   .merge(actionSource)
   .scan(applyActionToState)
-  .publish().refCount();
+  .publish()
+  .refCount();
 
 const hitSource = gameStateSource.filter(isHit);
 
-hitSource.zip(blockSource, (state, block) => ({ 
-  command: 'next', 
-  block: block 
-})).subscribe(actionSource);
+hitSource
+  .zip(blockSource, (state, block) => ({ command: 'next', 
+                                         block: block }))
+  .subscribe(actionSource);
 
 // todo: filter after getCompletedRows not before
-gameStateSource.filter(hasCompletedRow)
+gameStateSource
+  .filter(hasCompletedRow)
   .map(getCompletedRows)
   .map(rows => ({ command: 'completed', 
                   rows }))
@@ -141,16 +142,12 @@ function applyActionToState(state, action) {
         break;
   }
   
-  let temp = {
+  return {
     canvas: canvas,
     currentBlock: {
       coordinates: coordinates
     }
   };
-  
-  renderState(temp);
-  
-  return temp;
 }
 
 function isHit(state) {
