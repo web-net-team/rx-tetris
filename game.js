@@ -3,7 +3,9 @@ console.clear();
 const controls = {
   ArrowRight: { command: 'right' },
   ArrowLeft: { command: 'left' },
-  ArrowDown: { command: 'down' }
+  ArrowDown: { command: 'down' },
+  ArrowUp: { command: 'clock' },
+  y: { command: 'counter' }
 };
 
 const config = {
@@ -14,31 +16,45 @@ const config = {
 const blocks = [ { coordinates: [ { x: 3, y: 0 },
                                   { x: 4, y: 0 },
                                   { x: 3, y: 1 },
-                                  { x: 4, y: 1 } ] },
+                                  { x: 4, y: 1 } ],
+                   reference: { x: 3, y: 0 },
+                   edge: 2 },
                  { coordinates: [ { x: 2, y: 0 },
                                   { x: 3, y: 0 },
                                   { x: 4, y: 0 },
-                                  { x: 5, y: 0 } ] },
+                                  { x: 5, y: 0 } ],
+                   reference: { x: 2, y: -1 },
+                   edge: 4 },
                  { coordinates: [ { x: 3, y: 0 },
                                   { x: 4, y: 0 },
                                   { x: 4, y: 1 },
-                                  { x: 5, y: 1 } ] },
+                                  { x: 5, y: 1 } ],
+                   reference: { x: 3, y: 0 },
+                   edge: 3 },
                  { coordinates: [ { x: 4, y: 0 },
                                   { x: 5, y: 0 },
                                   { x: 3, y: 1 },
-                                  { x: 4, y: 1 } ] },
+                                  { x: 4, y: 1 } ],
+                   reference: { x: 3, y: -1 },
+                   edge: 3 },
                  { coordinates: [ { x: 3, y: 0 },
                                   { x: 4, y: 0 },
                                   { x: 5, y: 0 },
-                                  { x: 4, y: 1 } ] },
+                                  { x: 4, y: 1 } ],
+                   reference: { x: 3, y: -1 },
+                   edge: 3 },
                  { coordinates: [ { x: 3, y: 0 },
                                   { x: 4, y: 0 },
                                   { x: 5, y: 0 },
-                                  { x: 3, y: 1 } ] },
+                                  { x: 3, y: 1 } ],
+                   reference: { x: 3, y: -1 },
+                   edge: 3 },
                  { coordinates: [ { x: 3, y: 0 },
                                   { x: 4, y: 0 },
                                   { x: 5, y: 0 },
-                                  { x: 5, y: 1 } ] },
+                                  { x: 5, y: 1 } ],
+                   reference: { x: 3, y: -1 },
+                   edge: 3 }
 ];
 
 const initialState = initialStateFactory(config.rows, config.cols);
@@ -112,25 +128,40 @@ gameStateSource.subscribe(domRenderer);
 
 function applyActionToState(state, action) {
   let coordinates = [...state.currentBlock.coordinates];
-  let canvas = [...state.canvas]
+  let canvas = [...state.canvas];
+  let reference = { x: state.currentBlock.reference.x,
+                    y: state.currentBlock.reference.y };
+  let edge = state.currentBlock.edge;
   
   switch(action.command) {
     case 'down':
         coordinates = coordinates.map(c => ({ x: c.x, y: c.y + 1 }))
+        reference.y++;
         break;
     case 'left':
         if (!coordinates.some(c => c.x - 1 < 0 || canvas[c.y][c.x - 1] === 1)) {
-          coordinates = coordinates.map(c => ({ x: c.x - 1, y: c.y }))
+          coordinates = coordinates.map(c => ({ x: c.x - 1, y: c.y }));
+          reference.x--;
         }
         break;
     case 'right':
         if (!coordinates.some(c => c.x + 1 >= config.cols || canvas[c.y][c.x + 1] === 1)) {
-          coordinates = coordinates.map(c => ({ x: c.x + 1, y: c.y }))
+          coordinates = coordinates.map(c => ({ x: c.x + 1, y: c.y }));
+          reference.x++;          
         }
+        break;
+    case 'clock':
+        // todo: validate if actually possible
+        coordinates = coordinates.map(c => ({ 
+          x: (1 - ((c.y - reference.y) - (edge - 2))) + reference.x, 
+          y: (c.x - reference.x) + reference.y
+        }))
         break;
     case 'next':
         coordinates.forEach(c => canvas[c.y][c.x] = 1);
         coordinates = [...blocks[action.block].coordinates];
+        reference.x = blocks[action.block].reference.x;
+        reference.y = blocks[action.block].reference.y;
         break;
     case 'completed':
         action.rows.forEach(rowIndex => {
@@ -145,7 +176,9 @@ function applyActionToState(state, action) {
   return {
     canvas: canvas,
     currentBlock: {
-      coordinates: coordinates
+      coordinates: coordinates,
+      reference: reference,
+      edge: edge
     }
   };
 }
