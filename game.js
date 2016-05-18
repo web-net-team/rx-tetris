@@ -209,21 +209,41 @@ function renderState(state) {
 
 function domRenderer(state) {
   const squareSize = 50;
-  const canvas = document.querySelector('canvas');
+  const canvas = document.querySelector('canvas#blocks');
   const context = canvas.getContext("2d");
   
-  context.clearRect(0, 0, canvas.width, canvas.height);
+  // offscreen canvas
+  const off_canvas = document.createElement('canvas');
+  off_canvas.width = canvas.width;
+  off_canvas.height = canvas.height;
+  const off_context = off_canvas.getContext('2d');
   
   state.canvas.forEach((row, rowIndex) => {
     row.forEach((col, colIndex) => {
       const isFilled = state.currentBlock.coordinates.some(c => c.x === colIndex && c.y === rowIndex) ? 1 : col;
-      
       if (isFilled) {
-        context.fillRect(colIndex * squareSize, rowIndex * squareSize, squareSize, squareSize);  
-      } else {
-        context.rect(colIndex * squareSize, rowIndex * squareSize, squareSize, squareSize);
-        context.stroke();
+        off_context.fillRect(colIndex * squareSize, rowIndex * squareSize, squareSize, squareSize);  
       }
     });
   });
+  
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(off_canvas, 0, 0);
 }
+
+function renderRaster() {
+  const squareSize = 50;
+  const canvas = document.querySelector('canvas#raster');
+  const context = canvas.getContext("2d");
+  
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  
+  for (let row = 0; row < config.rows; row++) {
+    for (let col = 0; col < config.cols; col++) {
+      context.strokeStyle = "#AAA";
+      context.strokeRect(col * squareSize, row * squareSize, squareSize, squareSize);
+    }
+  }
+}
+
+renderRaster();

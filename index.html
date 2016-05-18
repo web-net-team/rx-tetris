@@ -4,9 +4,27 @@
     <meta charset="UTF-8">
     <title>Rx-Tetris</title>
     <script src="https://npmcdn.com/@reactivex/rxjs@5.0.0-alpha.8/dist/global/Rx.js"></script>
+    <style>
+        #gamecontainer {
+            position: relative;
+            width: 400px;
+            height: 600px;
+        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 1px solid red;
+        }
+    </style>
 </head>
 <body>
-    <canvas width="400" height="600"></canvas>
+    <div id="gamecontainer">
+        <canvas id="blocks" width="400" height="600"></canvas>
+        <canvas id="raster" width="400" height="600" is="tetrix-raster"></canvas>
+    </div>
     <script src="game.js"></script>
 </body>
 </html>
