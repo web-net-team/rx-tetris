@@ -128,7 +128,7 @@ gameStateSource.subscribe(domRenderer);
 
 function applyActionToState(state, action) {
   let coordinates = [...state.currentBlock.coordinates];
-  let canvas = [...state.canvas];
+  let canvas = [...state.canvas.map(row => [...row])];
   let reference = { x: state.currentBlock.reference.x,
                     y: state.currentBlock.reference.y };
   let edge = state.currentBlock.edge;
@@ -164,6 +164,7 @@ function applyActionToState(state, action) {
         reference.y = blocks[action.block].reference.y;
         break;
     case 'completed':
+        // todo: introduce a little time to still allow moving left and right
         action.rows.forEach(rowIndex => {
           canvas.splice(rowIndex, 1)
           canvas.unshift(createEmptyRow(config.cols))
