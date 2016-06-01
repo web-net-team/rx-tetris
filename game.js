@@ -13,6 +13,9 @@ const config = {
   cols: 8
 };
 
+const tickTime = 500;
+const lockDelay = 100;
+
 const blocks = [ { coordinates: [ { x: 3, y: 0 },
                                   { x: 4, y: 0 },
                                   { x: 3, y: 1 },
@@ -78,7 +81,8 @@ function initialStateFactory(rows, cols) {
 }
 
 // Blocks
-// todo: make infinite
+// todo: use random generator: http://tetris.wikia.com/wiki/Random_Generator
+// todo: make infinite stream => possibly use start
 const blockSource = Rx.Observable
   .range(1, 1000)
   .map(getRandomBlock);
@@ -88,7 +92,7 @@ const blockSource = Rx.Observable
  }
 
 // Tick
-const tickSource = Rx.Observable.interval(500);
+const tickSource = Rx.Observable.interval(tickTime);
 
 // Commmands
 const downSource = tickSource.map(ev => ({ command: 'down' }));
@@ -109,7 +113,9 @@ const gameStateSource = intialGameStateSource
   .publish()
   .refCount();
 
-const hitSource = gameStateSource.filter(isHit);
+const hitSource = gameStateSource
+  .filter(isLock)
+  .debounce(x => Rx.Observable.timer(lockDelay));
 
 hitSource
   .zip(blockSource, (state, block) => ({ command: 'next', 
@@ -127,35 +133,49 @@ gameStateSource
 gameStateSource.subscribe(domRenderer);
 
 function applyActionToState(state, action) {
+  // clone the complete state
   let coordinates = [...state.currentBlock.coordinates];
   let canvas = [...state.canvas.map(row => [...row])];
   let reference = { x: state.currentBlock.reference.x,
                     y: state.currentBlock.reference.y };
   let edge = state.currentBlock.edge;
   
+  let nextCoordinates;
+  
   switch(action.command) {
     case 'down':
-        coordinates = coordinates.map(c => ({ x: c.x, y: c.y + 1 }))
-        reference.y++;
+        nextCoordinates = coordinates.map(c => ({ x: c.x, y: c.y + 1 }))
+        
+        if (isValidPosition(canvas, nextCoordinates)) {
+          coordinates = nextCoordinates;
+          reference.y++;          
+        }
         break;
     case 'left':
-        if (!coordinates.some(c => c.x - 1 < 0 || canvas[c.y][c.x - 1] === 1)) {
-          coordinates = coordinates.map(c => ({ x: c.x - 1, y: c.y }));
+        nextCoordinates = coordinates.map(c => ({ x: c.x - 1, y: c.y })); 
+    
+        if (isValidPosition(canvas, nextCoordinates)) {
+          coordinates = nextCoordinates;          
           reference.x--;
         }
         break;
     case 'right':
-        if (!coordinates.some(c => c.x + 1 >= config.cols || canvas[c.y][c.x + 1] === 1)) {
-          coordinates = coordinates.map(c => ({ x: c.x + 1, y: c.y }));
+        nextCoordinates = coordinates.map(c => ({ x: c.x + 1, y: c.y }));    
+    
+        if (isValidPosition(canvas, nextCoordinates)) {
+          coordinates = nextCoordinates;          
           reference.x++;          
         }
         break;
     case 'clock':
-        // todo: validate if actually possible
-        coordinates = coordinates.map(c => ({ 
+        nextCoordinates = coordinates.map(c => ({ 
           x: (1 - ((c.y - reference.y) - (edge - 2))) + reference.x, 
           y: (c.x - reference.x) + reference.y
         }))
+        
+        if (isValidPosition(canvas, nextCoordinates)) {
+          coordinates = nextCoordinates;          
+        }
         break;
     case 'next':
         coordinates.forEach(c => canvas[c.y][c.x] = 1);
@@ -184,7 +204,7 @@ function applyActionToState(state, action) {
   };
 }
 
-function isHit(state) {
+function isLock(state) {
   return state.currentBlock.coordinates.some(c => c.y + 1 >= config.rows || state.canvas[c.y + 1][c.x] === 1);
 }
 
@@ -197,6 +217,10 @@ function getCompletedRows(state) {
     .map((row, index) => ({ row, index }))
     .filter(rowAndIndex => rowAndIndex.row.every(c => c))
     .map(rowAndIndex => rowAndIndex.index);
+}
+
+function isValidPosition(canvas, coordinates) {  
+  return !coordinates.some(c => c.x < 0 || c.x >= config.cols || c.y >= config.rows || (c.y >= 0 && canvas[c.y][c.x] === 1))
 }
 
 function renderState(state) {
