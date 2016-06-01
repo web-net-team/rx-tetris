@@ -184,7 +184,6 @@ function applyActionToState(state, action) {
         reference.y = blocks[action.block].reference.y;
         break;
     case 'completed':
-        // todo: introduce a little time to still allow moving left and right
         action.rows.forEach(rowIndex => {
           canvas.splice(rowIndex, 1)
           canvas.unshift(createEmptyRow(config.cols))
